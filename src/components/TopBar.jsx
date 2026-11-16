@@ -5,27 +5,38 @@ import {
   Plus,
   Menu,
   X,
-  Tag,
   ArrowUpDown,
   Sun,
   Moon,
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 export default function TopBar({
-  searchQuery,
-  onSearchChange,
-  selectedTag,
-  onTagChange,
-  allTags,
-  sortBy,
-  onSortChange,
-  viewMode,
-  onViewModeChange,
-  onOpenAddModal,
-  onOpenMobileSidebar,
   darkMode,
   onToggleDarkMode,
+  onOpenAddModal,
+  onOpenMobileSidebar,
 }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') || '';
+  const sortBy = searchParams.get('sort') || 'newest';
+  const viewMode = searchParams.get('view') || 'grid';
+
+  function setFilterParam(key, value, defaultValue = '') {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (!value || value === defaultValue) {
+          next.delete(key);
+        } else {
+          next.set(key, value);
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  }
+
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur-xs sm:px-6 dark:border-slate-800 dark:bg-slate-950/90">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -44,14 +55,14 @@ export default function TopBar({
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search titles, URLs, tags, notes..."
+              onChange={(e) => setFilterParam('q', e.target.value)}
+              placeholder="Search titles, URLs, notes..."
               className="w-full rounded-lg border border-slate-200 bg-slate-50/70 py-2 pl-9 pr-8 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-slate-600 dark:focus:bg-slate-900"
             />
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => onSearchChange('')}
+                onClick={() => setFilterParam('q', '')}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 aria-label="Clear search"
               >
@@ -63,27 +74,10 @@ export default function TopBar({
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex items-center">
-            <Tag className="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-slate-400" />
-            <select
-              value={selectedTag}
-              onChange={(e) => onTagChange(e.target.value)}
-              aria-label="Filter by tag"
-              className="rounded-lg border border-slate-200 bg-white py-2 pl-8 pr-7 text-xs font-medium text-slate-700 focus:border-slate-400 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-            >
-              <option value="all">All Tags</option>
-              {allTags.map((tag) => (
-                <option key={tag} value={tag}>
-                  #{tag}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="relative flex items-center">
             <ArrowUpDown className="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-slate-400" />
             <select
               value={sortBy}
-              onChange={(e) => onSortChange(e.target.value)}
+              onChange={(e) => setFilterParam('sort', e.target.value, 'newest')}
               aria-label="Sort bookmarks"
               className="rounded-lg border border-slate-200 bg-white py-2 pl-8 pr-7 text-xs font-medium text-slate-700 focus:border-slate-400 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
             >
@@ -97,7 +91,7 @@ export default function TopBar({
           <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-800 dark:bg-slate-900">
             <button
               type="button"
-              onClick={() => onViewModeChange('grid')}
+              onClick={() => setFilterParam('view', 'grid', 'grid')}
               className={`rounded-md p-1.5 transition-colors ${
                 viewMode === 'grid'
                   ? 'bg-white text-slate-900 shadow-xs dark:bg-slate-800 dark:text-slate-100'
@@ -109,7 +103,7 @@ export default function TopBar({
             </button>
             <button
               type="button"
-              onClick={() => onViewModeChange('list')}
+              onClick={() => setFilterParam('view', 'list', 'grid')}
               className={`rounded-md p-1.5 transition-colors ${
                 viewMode === 'list'
                   ? 'bg-white text-slate-900 shadow-xs dark:bg-slate-800 dark:text-slate-100'

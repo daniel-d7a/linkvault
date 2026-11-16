@@ -6,15 +6,6 @@ export function getHostname(url) {
   }
 }
 
-export function getFaviconUrl(url) {
-  try {
-    const { hostname } = new URL(url);
-    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
-  } catch {
-    return '';
-  }
-}
-
 /**
  * Fetches page metadata from linkpreview.net and falls back gracefully
  * if the API key is missing, rate-limited, or the request fails.
@@ -22,13 +13,11 @@ export function getFaviconUrl(url) {
 export async function fetchLinkPreview(url) {
   const apiKey = import.meta.env.VITE_LINKPREVIEW_API_KEY?.trim();
   const hostname = getHostname(url);
-  const favicon = getFaviconUrl(url);
 
   const fallback = {
     title: hostname,
     description: '',
     image: '',
-    favicon,
     url,
     usedFallback: true,
   };
@@ -56,7 +45,6 @@ export async function fetchLinkPreview(url) {
       title: data.title?.trim() || hostname,
       description: data.description?.trim() || '',
       image: data.image?.trim() || '',
-      favicon,
       url: data.url?.trim() || url,
       usedFallback: !data.title && !data.description && !data.image,
     };

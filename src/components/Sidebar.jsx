@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -12,9 +13,9 @@ import {
   X,
 } from 'lucide-react';
 
-const SMART_ICONS = {
-  'col-all': Bookmark,
-  'col-fav': Star,
+const SMART_VIEWS = {
+  'col-all': { icon: Bookmark, to: '/', end: true },
+  'col-fav': { icon: Star, to: '/favorites', end: false },
 };
 
 function makeCollectionSchema(existingNames, currentName = '') {
@@ -35,11 +36,16 @@ function makeCollectionSchema(existingNames, currentName = '') {
   });
 }
 
+const navItemCls = (isActive) =>
+  `flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
+    isActive
+      ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700'
+      : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100'
+  }`;
+
 export default function Sidebar({
   collections,
   bookmarks,
-  activeCollectionId,
-  onSelectCollection,
   onAddCollection,
   onRenameCollection,
   onDeleteCollection,
@@ -61,11 +67,6 @@ export default function Sidebar({
     return bookmarks.filter((b) => b.collectionId === colId).length;
   };
 
-  const handleSelect = (id) => {
-    onSelectCollection(id);
-    onCloseMobile?.();
-  };
-
   return (
     <>
       {isOpenMobile && (
@@ -81,14 +82,18 @@ export default function Sidebar({
         }`}
       >
         <div className="flex h-14 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-800">
-          <div className="flex items-center gap-2.5">
+          <NavLink
+            to="/"
+            onClick={onCloseMobile}
+            className="flex items-center gap-2.5"
+          >
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-900">
               <Bookmark className="h-4 w-4" />
             </div>
             <span className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               LinkVault
             </span>
-          </div>
+          </NavLink>
           <button
             type="button"
             onClick={onCloseMobile}
@@ -106,18 +111,19 @@ export default function Sidebar({
             </p>
             <ul className="space-y-1">
               {systemCollections.map((col) => {
-                const Icon = SMART_ICONS[col.id] || Bookmark;
-                const isActive = activeCollectionId === col.id;
+                const view = SMART_VIEWS[col.id] || {
+                  icon: Bookmark,
+                  to: '/',
+                  end: true,
+                };
+                const Icon = view.icon;
                 return (
                   <li key={col.id}>
-                    <button
-                      type="button"
-                      onClick={() => handleSelect(col.id)}
-                      className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700'
-                          : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100'
-                      }`}
+                    <NavLink
+                      to={view.to}
+                      end={view.end}
+                      onClick={onCloseMobile}
+                      className={({ isActive }) => navItemCls(isActive)}
                     >
                       <span className="flex items-center gap-2.5">
                         <Icon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
@@ -126,7 +132,7 @@ export default function Sidebar({
                       <span className="rounded-full bg-slate-200/70 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                         {getCount(col.id)}
                       </span>
-                    </button>
+                    </NavLink>
                   </li>
                 );
               })}
@@ -195,7 +201,6 @@ export default function Sidebar({
 
             <ul className="space-y-1">
               {customCollections.map((col) => {
-                const isActive = activeCollectionId === col.id;
                 const isEditing = editingId === col.id;
 
                 if (isEditing) {
@@ -247,18 +252,10 @@ export default function Sidebar({
 
                 return (
                   <li key={col.id} className="group relative">
-                    <div
-                      onClick={() => handleSelect(col.id)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') handleSelect(col.id);
-                      }}
-                      className={`flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700'
-                          : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100'
-                      }`}
+                    <NavLink
+                      to={`/collections/${col.id}`}
+                      onClick={onCloseMobile}
+                      className={({ isActive }) => navItemCls(isActive)}
                     >
                       <span className="flex min-w-0 items-center gap-2.5">
                         <Folder className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
@@ -269,6 +266,7 @@ export default function Sidebar({
                           <button
                             type="button"
                             onClick={(e) => {
+                              e.preventDefault();
                               e.stopPropagation();
                               setEditingId(col.id);
                             }}
@@ -280,6 +278,7 @@ export default function Sidebar({
                           <button
                             type="button"
                             onClick={(e) => {
+                              e.preventDefault();
                               e.stopPropagation();
                               onDeleteCollection(col.id);
                             }}
@@ -293,7 +292,7 @@ export default function Sidebar({
                           {getCount(col.id)}
                         </span>
                       </div>
-                    </div>
+                    </NavLink>
                   </li>
                 );
               })}

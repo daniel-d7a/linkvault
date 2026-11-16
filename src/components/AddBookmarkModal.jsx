@@ -1,21 +1,23 @@
-import { useState } from 'react';
-import { Formik, Form, Field } from 'formik';
-import * as Yup from 'yup';
-import { X, Sparkles, Loader2 } from 'lucide-react';
-import { fetchLinkPreview, getFaviconUrl, getHostname } from '../api/linkPreview';
-import BookmarkFormFields from './BookmarkFormFields';
-import { parseTags } from '../utils/tags';
+import { Field, Form, Formik } from "formik";
+import { Loader2, Sparkles, X } from "lucide-react";
+import { useState } from "react";
+import * as Yup from "yup";
+import { fetchLinkPreview, getHostname } from "../api/linkPreview";
+
+const inputCls =
+  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-slate-500";
+const labelCls =
+  "mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300";
 
 const addSchema = Yup.object({
   url: Yup.string()
     .trim()
-    .url('Enter a valid URL (include https://)')
-    .required('URL is required'),
-  title: Yup.string().trim().required('Title is required'),
+    .url("Enter a valid URL (include https://)")
+    .required("URL is required"),
+  title: Yup.string().trim().required("Title is required"),
   description: Yup.string(),
-  image: Yup.string().trim().url('Enter a valid image URL').nullable(),
+  image: Yup.string().trim().url("Enter a valid image URL").nullable(),
   collectionId: Yup.string(),
-  tags: Yup.string(),
   notes: Yup.string(),
 });
 
@@ -24,39 +26,22 @@ export default function AddBookmarkModal({
   onClose,
   onAddBookmark,
   customCollections,
-  defaultCollectionId,
 }) {
   const [isFetching, setIsFetching] = useState(false);
-  const [previewNotice, setPreviewNotice] = useState('');
+  const [previewNotice, setPreviewNotice] = useState("");
 
   if (!isOpen) return null;
 
-  const initialCollection =
-    customCollections.find((c) => c.id === defaultCollectionId)?.id ||
-    customCollections[0]?.id ||
-    '';
+  const initialCollection = "";
 
-  const handleFetchPreview = async (url, setFieldValue, setFieldTouched) => {
-    setFieldTouched('url', true);
-    try {
-      await Yup.string().trim().url().required().validate(url);
-    } catch {
-      return;
-    }
-
+  const handleFetchPreview = async (url, setFieldValue) => {
     setIsFetching(true);
-    setPreviewNotice('');
+    setPreviewNotice("");
     const meta = await fetchLinkPreview(url.trim());
-    setFieldValue('title', meta.title);
-    if (meta.description) setFieldValue('description', meta.description);
-    if (meta.image) setFieldValue('image', meta.image);
+    setFieldValue("title", meta.title);
+    if (meta.description) setFieldValue("description", meta.description);
+    if (meta.image) setFieldValue("image", meta.image);
     setIsFetching(false);
-
-    if (meta.usedFallback) {
-      setPreviewNotice(
-        'Auto-preview unavailable (missing/limited API key) — filled domain title so you can customize.'
-      );
-    }
   };
 
   return (
@@ -78,13 +63,12 @@ export default function AddBookmarkModal({
 
         <Formik
           initialValues={{
-            url: '',
-            title: '',
-            description: '',
-            image: '',
+            url: "",
+            title: "",
+            description: "",
+            image: "",
             collectionId: initialCollection,
-            tags: '',
-            notes: '',
+            notes: "",
           }}
           validationSchema={addSchema}
           onSubmit={(values, { resetForm }) => {
@@ -94,13 +78,11 @@ export default function AddBookmarkModal({
               title: values.title.trim() || getHostname(cleanUrl),
               description: values.description.trim(),
               image: values.image.trim(),
-              favicon: getFaviconUrl(cleanUrl),
               collectionId: values.collectionId || null,
-              tags: parseTags(values.tags),
               notes: values.notes.trim(),
             });
             resetForm();
-            setPreviewNotice('');
+            setPreviewNotice("");
             onClose();
           }}
         >
@@ -125,7 +107,11 @@ export default function AddBookmarkModal({
                     type="button"
                     disabled={isFetching}
                     onClick={() =>
-                      handleFetchPreview(values.url, setFieldValue, setFieldTouched)
+                      handleFetchPreview(
+                        values.url,
+                        setFieldValue,
+                        setFieldTouched,
+                      )
                     }
                     className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                   >
@@ -138,7 +124,9 @@ export default function AddBookmarkModal({
                   </button>
                 </div>
                 {touched.url && errors.url && (
-                  <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{errors.url}</p>
+                  <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+                    {errors.url}
+                  </p>
                 )}
                 {previewNotice && (
                   <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
@@ -147,11 +135,82 @@ export default function AddBookmarkModal({
                 )}
               </div>
 
-              <BookmarkFormFields
-                errors={errors}
-                touched={touched}
-                customCollections={customCollections}
-              />
+              <div>
+                <label htmlFor="title" className={labelCls}>
+                  Title <span className="text-rose-500">*</span>
+                </label>
+                <Field
+                  id="title"
+                  name="title"
+                  placeholder="Page title"
+                  className={inputCls}
+                />
+                {touched.title && errors.title && (
+                  <p className="mt-1 text-xs text-rose-600">{errors.title}</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="description" className={labelCls}>
+                  Description
+                </label>
+                <Field
+                  as="textarea"
+                  id="description"
+                  name="description"
+                  rows={2}
+                  placeholder="Short summary..."
+                  className={inputCls}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="image" className={labelCls}>
+                  Cover Image URL
+                </label>
+                <Field
+                  id="image"
+                  name="image"
+                  placeholder="https://example.com/og-image.png"
+                  className={inputCls}
+                />
+                {touched.image && errors.image && (
+                  <p className="mt-1 text-xs text-rose-600">{errors.image}</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="collectionId" className={labelCls}>
+                  Collection
+                </label>
+                <Field
+                  as="select"
+                  id="collectionId"
+                  name="collectionId"
+                  className={inputCls}
+                >
+                  <option value="">No collection</option>
+                  {customCollections.map((col) => (
+                    <option key={col.id} value={col.id}>
+                      {col.name}
+                    </option>
+                  ))}
+                </Field>
+              </div>
+
+              <div>
+                <label htmlFor="notes" className={labelCls}>
+                  Notes
+                </label>
+                <Field
+                  as="textarea"
+                  id="notes"
+                  name="notes"
+                  rows={2}
+                  placeholder="Personal notes or key takeaways..."
+                  className={inputCls}
+                />
+              </div>
 
               <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
                 <button

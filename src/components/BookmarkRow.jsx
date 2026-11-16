@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { ExternalLink, Globe } from 'lucide-react';
 import { getHostname } from '../api/linkPreview';
 import BookmarkActions from './BookmarkActions';
@@ -9,25 +8,14 @@ export default function BookmarkRow({
   onToggleFavorite,
   onEdit,
   onDelete,
-  onTagClick,
 }) {
-  const [faviconError, setFaviconError] = useState(false);
   const domain = getHostname(bookmark.url);
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-xs transition-colors hover:border-slate-300 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700">
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-          {bookmark.favicon && !faviconError ? (
-            <img
-              src={bookmark.favicon}
-              alt=""
-              onError={() => setFaviconError(true)}
-              className="h-4 w-4 rounded-xs"
-            />
-          ) : (
-            <Globe className="h-4 w-4 text-slate-400" />
-          )}
+          <Globe className="h-4 w-4 text-slate-400" />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -61,16 +49,6 @@ export default function BookmarkRow({
                 </span>
               </>
             )}
-            {bookmark.tags?.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => onTagClick?.(tag)}
-                className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-              >
-                #{tag}
-              </button>
-            ))}
           </div>
         </div>
       </div>
